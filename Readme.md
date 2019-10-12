@@ -5,7 +5,7 @@ Kenneth Dawson-Howe's Computer Vision course.
 
 The problem is to develop a program in C++ to locate and recognise 81 information signs from Dublin train stations in the 33 provided images.
 
-![Sample Results](Blue_Signs/BlueSignSampleResults.png "Sample Results")
+![Sample Results](Blue%20Signs/BlueSignSampleResults.png "Sample Results")
 
 ## Environment Setup
 - This project uses openCV v3.2. Unix download is available from [here](https://sourceforge.net/projects/opencvlibrary/files/opencv-unix/3.2.0/opencv-3.2.0.zip/download).
