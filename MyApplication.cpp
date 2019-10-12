@@ -2,9 +2,9 @@
 #include <iostream>
 #include <fstream>
 #include <list>
-#include <experimental/filesystem> // C++-standard header file name
+// #include <experimental/filesystem> // C++-standard header file name
 //#include <filesystem> // Microsoft-specific implementation header file name
-using namespace std::experimental::filesystem::v1;
+//using namespace std::experimental::filesystem::v1;
 using namespace std;
 
 
@@ -304,11 +304,13 @@ ImageWithBlueSignObjects::ImageWithBlueSignObjects(FileNode& node) :
 
 AnnotatedImages::AnnotatedImages(string directory_name)
 {
-	name = directory_name;
-	for (std::experimental::filesystem::directory_iterator next(std::experimental::filesystem::path(directory_name.c_str())), end; next != end; ++next)
-	{
-		read(next->path().generic_string());
-	}
+    // filesystem is not a feature with clang compiler
+
+	// name = directory_name;
+	// for (std::experimental::filesystem::directory_iterator next(std::experimental::filesystem::path(directory_name.c_str())), end; next != end; ++next)
+	// {
+	// 	read(next->path().generic_string());
+	// }
 }
 AnnotatedImages::AnnotatedImages()
 {
@@ -471,10 +473,11 @@ void MyApplication()
 	{
 		trainingImages.read(training_file);
 	}
+    
 	training_file.release();
 	Mat image_of_all_training_objects = trainingImages.getImageOfAllObjects();
 	imshow("All Training Objects", image_of_all_training_objects);
-	// imwrite("AllTrainingObjectImages.jpg", image_of_all_training_objects);
+	imwrite("AllTrainingObjectImages.jpg", image_of_all_training_objects);
 	char ch = cv::waitKey(1);
 
 	AnnotatedImages groundTruthImages;
@@ -490,7 +493,7 @@ void MyApplication()
 	ground_truth_file.release();
 	Mat image_of_all_ground_truth_objects = groundTruthImages.getImageOfAllObjects();
 	imshow("All Ground Truth Objects", image_of_all_ground_truth_objects);
-	// imwrite("AllGroundTruthObjectImages.jpg", image_of_all_ground_truth_objects);
+	imwrite("AllGroundTruthObjectImages.jpg", image_of_all_ground_truth_objects);
 	ch = cv::waitKey(1);
 
 	AnnotatedImages unknownImages("Blue Signs/Testing");
@@ -507,7 +510,7 @@ void MyApplication()
 	unknowns_file.release();
 	Mat image_of_recognised_objects = unknownImages.getImageOfAllObjects();
 	imshow("All Recognised Objects", image_of_recognised_objects);
-	// imwrite("AllRecognisedObjects.jpg", image_of_recognised_objects);
+	imwrite("AllRecognisedObjects.jpg", image_of_recognised_objects);
 
 	ConfusionMatrix results(trainingImages);
 	unknownImages.CompareObjectsWithGroundTruth(trainingImages, groundTruthImages, results);
@@ -870,6 +873,9 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 
 
 int main(){
+
+    MyApplication();
+ 
 
     return 0;
 }

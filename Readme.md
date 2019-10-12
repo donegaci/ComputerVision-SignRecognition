@@ -21,9 +21,14 @@ The problem is to develop a program in C++ to locate and recognise 81 informatio
    
    `cd build`
 
-2. GNU header files are used in this project so make sure you use GNU compiler instead of clang when invoking CMake.
-
-   `cmake -DCMAKE_C_COMPILER=/usr/local/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/local/bin/g++-9 ..`
-2. Build the binary executable.
+2. `cmake ..`
+  
+3. Build the binary executable.
    
    `make`
+
+4. To run the program, you must be in the base directory (i.e. the one containing the "Blue Signs" folder)
+
+   `cd ..`
+
+   `build/blueSignRecognition `
