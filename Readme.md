@@ -8,8 +8,9 @@ The problem is to develop a program in C++ to locate and recognise 81 informatio
 ![Sample Results](Blue%20Signs/BlueSignSampleResults.png "Sample Results")
 
 ## Environment Setup
-- This project uses openCV v3.2. Unix download is available from [here](https://sourceforge.net/projects/opencvlibrary/files/opencv-unix/3.2.0/opencv-3.2.0.zip/download).
-- CMake available from [here](https://cmake.org/download/).
+- This project uses openCV v3.2. Unix download is available from [OpenCV](https://sourceforge.net/projects/opencvlibrary/files/opencv-unix/3.2.0/opencv-3.2.0.zip/download).
+- CMake available from [CMake](https://cmake.org/download/).
+- In order to `#include filesystem` with Clang compiler you wil need Boost library available from [Boost](https://www.boost.org/doc/libs/1_71_0/more/getting_started/index.html). 
 - You may have to add `export OpenCV_DIR=/usr/local/share/OpenCV` to your `bash_profile`
   so that CMake will know where to find OpenCV libraries.
 
