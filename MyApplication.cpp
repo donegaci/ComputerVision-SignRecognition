@@ -2,9 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <list>
+#include <boost/filesystem.hpp>
+
 // #include <experimental/filesystem> // C++-standard header file name
 //#include <filesystem> // Microsoft-specific implementation header file name
 //using namespace std::experimental::filesystem::v1;
+
 using namespace std;
 
 
@@ -304,13 +307,11 @@ ImageWithBlueSignObjects::ImageWithBlueSignObjects(FileNode& node) :
 
 AnnotatedImages::AnnotatedImages(string directory_name)
 {
-    // filesystem is not a feature with clang compiler
-
-	// name = directory_name;
-	// for (std::experimental::filesystem::directory_iterator next(std::experimental::filesystem::path(directory_name.c_str())), end; next != end; ++next)
-	// {
-	// 	read(next->path().generic_string());
-	// }
+	name = directory_name;
+	for (boost::filesystem::directory_iterator next(boost::filesystem::path(directory_name.c_str())), end; next != end; ++next)
+	{
+		read(next->path().generic_string());
+	}
 }
 AnnotatedImages::AnnotatedImages()
 {
