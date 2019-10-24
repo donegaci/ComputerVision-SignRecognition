@@ -21,8 +21,6 @@ using namespace std;
 // Located shape must overlap the ground truth by 80% to be considered a match
 #define REQUIRED_OVERLAP 0.8
 
-void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour=-1.0);
-void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour=-1.0);
 
 class ObjectAndLocation
 {
@@ -870,36 +868,29 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
 	// *** Student needs to develop this routine and add in objects using the addObject method
 
     const Mat& image = this->image;
-
-    Mat downsized_image, grey_image, hls_image;
+    Mat downsized_image, grey_image, hsv_image;
 
     resize(image, downsized_image, Size(image.cols/4, image.rows/4));   
     imshow("RGB Image", downsized_image);
     waitKey(0);
 
-    cvtColor(downsized_image, hls_image, COLOR_BGR2HLS);
-    cvtColor(downsized_image, grey_image, COLOR_BGR2GRAY);
+    Mat thresholded_image, eroded_image, opened_image;
+    Mat structure(5,5,CV_8U, Scalar(1));
+    Scalar hsv_l(105,60,30); 
+    Scalar hsv_h(130,255,255); 
 
-    imshow("Grey Image", grey_image);
+    cvtColor(downsized_image, hsv_image, CV_BGR2HSV);
+    inRange(hsv_image, hsv_l, hsv_h, thresholded_image);
+    imshow("Thresholded", thresholded_image);
     waitKey(0);
 
-
-    Mat binary_edges;
-
-    Canny(grey_image, binary_edges, 100, 200);
-
-    imshow("Canny Edge Image", binary_edges);
+    erode(thresholded_image, eroded_image, structure);
+    imshow("Eroded", eroded_image);
     waitKey(0);
 
-    Mat hough_image = Mat::zeros(Size(binary_edges.cols, binary_edges.rows), CV_8UC1);
-    vector<Vec2f> hough_lines;
-    HoughLines(binary_edges, hough_lines, 1, PI/200.0, 200);
- 
-
-    DrawLines(hough_image, hough_lines);
-    imshow("Hough Lines", hough_image);
+    morphologyEx( thresholded_image, opened_image, MORPH_OPEN, structure);
+    imshow("Opened", opened_image);
     waitKey(0);
-
     
 }
 
@@ -944,48 +935,4 @@ int main(){
     
 
     return 0;
-}
-
-
-// Draw lines defined by rho and theta parameters
-void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour)
-{
-	for (vector<cv::Vec2f>::const_iterator current_line = lines.begin();
-		    (current_line != lines.end()); current_line++)
-	{
-		float rho = (*current_line)[0];
-		float theta = (*current_line)[1];
-		// To avoid divide by zero errors we offset slightly from 0.0
-		float cos_theta = (cos(theta) == 0.0) ? (float) 0.000000001 : (float) cos(theta);
-		float sin_theta = (sin(theta) == 0.0) ? (float) 0.000000001 : (float) sin(theta);
-		Point left((int) (rho/cos(theta)),0);
-		Point right((int) ((rho-(result_image.rows-1)*sin(theta))/cos(theta)),(int) ((result_image.rows-1)));
-		Point top(0,(int) (rho/sin(theta)));
-		Point bottom((int)(result_image.cols-1),(int) ((rho-(result_image.cols-1)*cos(theta))/sin(theta)));
-		Point* point1 = NULL;
-		Point* point2 = NULL;
-		if ((left.y >= 0.0) && (left.y <= (result_image.rows-1)))
-			point1 = &left;
-		if ((right.y >= 0.0) && (right.y <= (result_image.rows-1))){
-			if (point1 == NULL)
-				point1 = &right;
-			else 
-                point2 = &right;
-        }
-		if ((point2 == NULL) && (top.x >= 0.0) && (top.x <= (result_image.cols-1))){
-			if (point1 == NULL)
-				point1 = &top;
-			else if ((point1->x != top.x) || (point1->y != top.y))
-				point2 = &top;
-        }
-		if (point2 == NULL)
-			point2 = &bottom;
-		DrawLine(result_image, *point1, *point2, passed_colour);
-	}
-}
-
-void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour)
-{
-    Scalar colour( rand()&0xFF, rand()&0xFF, rand()&0xFF );
-	line( result_image, point1, point2, (passed_colour.val[0] == -1.0) ? colour : passed_colour );
 }
