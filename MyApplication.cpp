@@ -856,8 +856,8 @@ void ConfusionMatrix::Print()
 
 void ObjectAndLocation::setImage(Mat object_image)
 {
-	image = object_image.clone();
-	// *** Student should add any initialisation (of their images or features; see private data below) they wish into this method.
+    // *** Student should add any initialisation (of their images or features; see private data below) they wish into this method.
+    image = object_image.clone();
 }
 
 
@@ -916,18 +916,26 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
                 line(poly_image, points.at(2), points.at(3), cvScalar(255), 2);
                 line(poly_image, points.at(3), points.at(0), cvScalar(255), 2);
 
-                addObject("object", points[0].x, points[0].y,
-                                    points[1].x, points[1].y,
-                                    points[2].x, points[2].y,
-                                    points[3].x, points[3].y, 
-                                    downsized_image
-                                );
+                Mat mask = Mat::zeros(Size(contour_image.cols, contour_image.rows), CV_8UC1);
+                fillConvexPoly(mask, points, Scalar(255));
+
+                Mat object_image;
+                downsized_image.copyTo(object_image, mask);
+
+                training_images.FindBestMatch(
+                    addObject("object", points[0].x, points[0].y,
+                                        points[1].x, points[1].y,
+                                        points[2].x, points[2].y,
+                                        points[3].x, points[3].y, 
+                                        object_image
+                                    )
+                );
             }
         }
     }
 
     imshow("Approximated Polygons", poly_image);
-    waitKey(0);
+    waitKey(500);
 
 }
 
@@ -937,6 +945,10 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 {
 	// *** Student should write code to compare objects using chosen method.
 	// Please bear in mind that ImageWithObjects::FindBestMatch assumes that the lower the value the better.  Feel free to change this.
+
+    imshow("Training", this->image);
+    imshow("Test", otherObject->image);
+    
 	return BAD_MATCHING_VALUE;
 }
 
