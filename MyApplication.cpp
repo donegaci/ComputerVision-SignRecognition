@@ -21,6 +21,8 @@ using namespace std;
 // Located shape must overlap the ground truth by 80% to be considered a match
 #define REQUIRED_OVERLAP 0.8
 
+void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour=-1.0);
+void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour=-1.0);
 
 class ObjectAndLocation
 {
@@ -856,10 +858,6 @@ void ObjectAndLocation::setImage(Mat object_image)
 {
 	image = object_image.clone();
 	// *** Student should add any initialisation (of their images or features; see private data below) they wish into this method.
-    // namedWindow("image");
-    // imshow("image", image);
-    // waitKey(0);
-
 }
 
 
@@ -870,28 +868,67 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
     const Mat& image = this->image;
     Mat downsized_image, grey_image, hsv_image;
 
+    // downsize image by a factor of 4
     resize(image, downsized_image, Size(image.cols/4, image.rows/4));   
     imshow("RGB Image", downsized_image);
-    waitKey(0);
 
     Mat thresholded_image, eroded_image, opened_image;
     Mat structure(5,5,CV_8U, Scalar(1));
-    Scalar hsv_l(105,60,30); 
+    Scalar hsv_l(105,60,20); 
     Scalar hsv_h(130,255,255); 
 
+    // Threshold the image within range of hsv colours
     cvtColor(downsized_image, hsv_image, CV_BGR2HSV);
     inRange(hsv_image, hsv_l, hsv_h, thresholded_image);
     imshow("Thresholded", thresholded_image);
-    waitKey(0);
 
-    erode(thresholded_image, eroded_image, structure);
-    imshow("Eroded", eroded_image);
-    waitKey(0);
-
+    // Performing Opening to remove noise
     morphologyEx( thresholded_image, opened_image, MORPH_OPEN, structure);
     imshow("Opened", opened_image);
+
+
+    // Find contours
+    Mat contour_image = Mat::zeros(opened_image.size(), CV_8UC1);
+    vector<vector<Point>> contours;
+    vector<Vec4i> hierarchy;
+    findContours(opened_image, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_NONE);
+
+    for (int i=0; i< contours.size(); i++){
+        Scalar colour = (255);
+        drawContours(contour_image, contours, i, colour, 1, 8, hierarchy);
+    }
+
+    imshow("Contour", contour_image);
+
+
+    // Approximate contours to straight lines to create 4 sided polygons
+    Mat poly_image = Mat::zeros(Size(contour_image.cols, contour_image.rows), CV_8UC1);
+
+    vector<Point> points;
+    for( int i=0; i<contours.size(); i++ ){
+        approxPolyDP(Mat(contours[i]), points, 3, true);
+        if (points.size() == 4 ){
+            // only consider line that meet minimum side length
+            // length is divide by 4 because the image was subsampled by 4
+            if ( norm(points.at(0) - points.at(1)) >= MINIMUM_SIGN_SIDE/4 ){
+                line(poly_image, points.at(0), points.at(1), cvScalar(255), 2);
+                line(poly_image, points.at(1), points.at(2), cvScalar(255), 2);
+                line(poly_image, points.at(2), points.at(3), cvScalar(255), 2);
+                line(poly_image, points.at(3), points.at(0), cvScalar(255), 2);
+
+                addObject("object", points[0].x, points[0].y,
+                                    points[1].x, points[1].y,
+                                    points[2].x, points[2].y,
+                                    points[3].x, points[3].y, 
+                                    downsized_image
+                                );
+            }
+        }
+    }
+
+    imshow("Approximated Polygons", poly_image);
     waitKey(0);
-    
+
 }
 
 
@@ -907,32 +944,72 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 
 int main(){
 
-    // MyApplication();
+    MyApplication();
 
-    AnnotatedImages training;
-	FileStorage training_file("BlueSignsTraining.xml", FileStorage::READ);
-	if (!training_file.isOpened())
-	{
-		cout << "Could not open the file: \"" << "BlueSignsTraining.xml" << "\"" << endl;
-	}
-	else
-	{
-		training.read(training_file);
-	}
+    // AnnotatedImages training;
+	// FileStorage training_file("BlueSignsTraining.xml", FileStorage::READ);
+	// if (!training_file.isOpened())
+	// {
+	// 	cout << "Could not open the file: \"" << "BlueSignsTraining.xml" << "\"" << endl;
+	// }
+	// else
+	// {
+	// 	training.read(training_file);
+	// }
 
-    namedWindow("Training");
-    imshow("Training", training.getImageOfAllObjects());
-    waitKey(0);
+    // namedWindow("Training");
+    // imshow("Training", training.getImageOfAllObjects());
+    // waitKey(0);
 
-    AnnotatedImages train_originals("Blue Signs/Training Originals");
+    // AnnotatedImages train_originals("Blue Signs/Training Originals");
 
-    train_originals.LocateAndAddAllObjects(training);
+    // train_originals.LocateAndAddAllObjects(training);
 
-
-    
-
-    
-    
 
     return 0;
 }
+
+
+
+// Draw lines defined by rho and theta parameters
+ void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour)
+ {
+ 	for (vector<cv::Vec2f>::const_iterator current_line = lines.begin();
+ 		    (current_line != lines.end()); current_line++)
+ 	{
+ 		float rho = (*current_line)[0];
+ 		float theta = (*current_line)[1];
+ 		// To avoid divide by zero errors we offset slightly from 0.0
+ 		float cos_theta = (cos(theta) == 0.0) ? (float) 0.000000001 : (float) cos(theta);
+ 		float sin_theta = (sin(theta) == 0.0) ? (float) 0.000000001 : (float) sin(theta);
+ 		Point left((int) (rho/cos(theta)),0);
+ 		Point right((int) ((rho-(result_image.rows-1)*sin(theta))/cos(theta)),(int) ((result_image.rows-1)));
+ 		Point top(0,(int) (rho/sin(theta)));
+ 		Point bottom((int)(result_image.cols-1),(int) ((rho-(result_image.cols-1)*cos(theta))/sin(theta)));
+ 		Point* point1 = NULL;
+ 		Point* point2 = NULL;
+ 		if ((left.y >= 0.0) && (left.y <= (result_image.rows-1)))
+ 			point1 = &left;
+ 		if ((right.y >= 0.0) && (right.y <= (result_image.rows-1))){
+ 			if (point1 == NULL)
+ 				point1 = &right;
+ 			else 
+                 point2 = &right;
+         }
+ 		if ((point2 == NULL) && (top.x >= 0.0) && (top.x <= (result_image.cols-1))){
+ 			if (point1 == NULL)
+ 				point1 = &top;
+ 			else if ((point1->x != top.x) || (point1->y != top.y))
+ 				point2 = &top;
+         }
+ 		if (point2 == NULL)
+ 			point2 = &bottom;
+ 		DrawLine(result_image, *point1, *point2, passed_colour);
+ 	}
+ }
+
+ void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour)
+ {
+     Scalar colour( rand()&0xFF, rand()&0xFF, rand()&0xFF );
+ 	line( result_image, point1, point2, (passed_colour.val[0] == -1.0) ? colour : passed_colour );
+ } 
