@@ -870,14 +870,16 @@ void ObjectAndLocation::setImage(Mat object_image)
     // if the image added is a new unknow image
     if (object_name == "new_object"){
 
-        Point2f source[] = {vertices[0], vertices[1], vertices[2]};
-        Point2f destination[] = {Point2f(0,0), Point2f(200,0), Point2f(200,200)};
+        Point2f source[] = {vertices[0], vertices[1], vertices[2], vertices[3]};
+        Point2f destination[] = {Point2f(0,0), Point2f(200,0), Point2f(200,200), Point2f(0,200)};
 
-        // Transofrm object into a 200 x 200 image using affine transformation
+        // Transofrm object into a 200 x 200 image using perspective transformation
         Mat transformed_image = Mat::zeros(Size(200,200),CV_8UC3);
-        Mat affine_matrix = getAffineTransform(source, destination);
-        warpAffine(object_image, transformed_image, affine_matrix, transformed_image.size(), INTER_CUBIC );
+        Mat matrix = getPerspectiveTransform(source, destination);
+        warpPerspective(object_image, transformed_image, matrix, transformed_image.size(), INTER_CUBIC );
 
+        imshow("Transformed image", transformed_image);
+        waitKey(0);
         image = transformed_image;
     }
 }
