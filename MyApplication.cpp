@@ -887,15 +887,13 @@ void ObjectAndLocation::setImage(Mat object_image)
 void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_images)
 {
 	// *** Student needs to develop this routine and add in objects using the addObject method
-
-    const Mat& image = this->image;
-    Mat downsized_image, grey_image, hsv_image;
-
+    
     // downsize image by a factor of 4
+    Mat downsized_image;
     resize(image, downsized_image, Size(image.cols/4, image.rows/4));   
     imshow("RGB Image", downsized_image);
 
-    Mat thresholded_image, eroded_image, opened_image;
+    Mat hsv_image, thresholded_image, opened_image;
     Mat structure(5,5,CV_8U, Scalar(1));
     Scalar hsv_l(105,60,20); 
     Scalar hsv_h(130,255,255); 
@@ -972,7 +970,7 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 	// *** Student should write code to compare objects using chosen method.
 	// Please bear in mind that ImageWithObjects::FindBestMatch assumes that the lower the value the better.  Feel free to change this.
 
-    imshow("Training", this->image);
+    imshow("Training", image);
     imshow("Test", otherObject->image);
     
 	return BAD_MATCHING_VALUE;
