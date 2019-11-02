@@ -24,6 +24,14 @@ using namespace std;
 void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour=-1.0);
 void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour=-1.0);
 
+// Structs for sorting vector of points 
+struct sortY {
+    bool operator() (cv::Point pt1, cv::Point pt2) { return (pt1.y < pt2.y);}
+} mySortY;
+struct sortX {
+    bool operator() (cv::Point pt1, cv::Point pt2) { return (pt1.x < pt2.x);}
+} mySortX;
+
 class ObjectAndLocation
 {
 public:
@@ -858,8 +866,21 @@ void ObjectAndLocation::setImage(Mat object_image)
 {
     // *** Student should add any initialisation (of their images or features; see private data below) they wish into this method.
     image = object_image.clone();
-}
 
+    // if the image added is a new unknow image
+    if (object_name == "new_object"){
+
+        Point2f source[] = {vertices[0], vertices[1], vertices[2]};
+        Point2f destination[] = {Point2f(0,0), Point2f(200,0), Point2f(200,200)};
+
+        // Transofrm object into a 200 x 200 image using affine transformation
+        Mat transformed_image = Mat::zeros(Size(200,200),CV_8UC3);
+        Mat affine_matrix = getAffineTransform(source, destination);
+        warpAffine(object_image, transformed_image, affine_matrix, transformed_image.size(), INTER_CUBIC );
+
+        image = transformed_image;
+    }
+}
 
 void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_images)
 {
@@ -918,15 +939,18 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
 
                 Mat mask = Mat::zeros(Size(contour_image.cols, contour_image.rows), CV_8UC1);
                 fillConvexPoly(mask, points, Scalar(255));
-
                 Mat object_image;
                 downsized_image.copyTo(object_image, mask);
+                
+                sort(points.begin(), points.end(), mySortY);
+                sort(points.begin(), points.begin()+2, mySortX);
+                sort(points.begin()+2, points.end(), mySortX);
 
                 training_images.FindBestMatch(
-                    addObject("object", points[0].x, points[0].y,
-                                        points[1].x, points[1].y,
-                                        points[2].x, points[2].y,
-                                        points[3].x, points[3].y, 
+                    addObject("new_object", points[0].x, points[0].y,  // top left
+                                        points[1].x, points[1].y,      // top right
+                                        points[3].x, points[3].y,      // bottom right
+                                        points[2].x, points[2].y,      // botttom left
                                         object_image
                                     )
                 );
@@ -935,7 +959,7 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
     }
 
     imshow("Approximated Polygons", poly_image);
-    waitKey(500);
+    waitKey(0);
 
 }
 
