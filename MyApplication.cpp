@@ -977,36 +977,6 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 }
 
 
-
-int main(){
-
-    MyApplication();
-
-    // AnnotatedImages training;
-	// FileStorage training_file("BlueSignsTraining.xml", FileStorage::READ);
-	// if (!training_file.isOpened())
-	// {
-	// 	cout << "Could not open the file: \"" << "BlueSignsTraining.xml" << "\"" << endl;
-	// }
-	// else
-	// {
-	// 	training.read(training_file);
-	// }
-
-    // namedWindow("Training");
-    // imshow("Training", training.getImageOfAllObjects());
-    // waitKey(0);
-
-    // AnnotatedImages train_originals("Blue Signs/Training Originals");
-
-    // train_originals.LocateAndAddAllObjects(training);
-
-
-    return 0;
-}
-
-
-
 // Draw lines defined by rho and theta parameters
  void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour)
  {

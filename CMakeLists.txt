@@ -8,6 +8,7 @@ find_package( Boost COMPONENTS filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 add_executable( 
     blueSignRecognition
+    main.cpp
     MyApplication.cpp
     Utilities.cpp
 )
