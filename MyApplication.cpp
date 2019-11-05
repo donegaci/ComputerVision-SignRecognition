@@ -24,7 +24,6 @@ using namespace std;
 #define SUBSAMPLE_FACTOR 1
 void DrawLines(Mat result_image, vector<Vec2f> lines, Scalar passed_colour=-1.0);
 void DrawLine(Mat result_image, Point point1, Point point2, Scalar passed_colour=-1.0);
-void ChamferMatching( Mat& chamfer_image, Mat& model, Mat& matching_image );
 
 // Structs for sorting vector of points 
 struct sortY {
@@ -880,7 +879,9 @@ void ObjectAndLocation::setImage(Mat object_image)
         Mat matrix = getPerspectiveTransform(source, destination);
         warpPerspective(object_image, transformed_image, matrix, transformed_image.size(), INTER_CUBIC );
 
+        //cout << matrix << endl;
         // imshow("Transformed image", transformed_image);
+        imwrite("perspective_transformed.png", transformed_image);
         // waitKey(0);
         image = transformed_image;
     }
@@ -893,7 +894,8 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
     // downsize image by SUBSAMPLE_FACTOR
     Mat downsized_image;
     resize(image, downsized_image, Size(image.cols/SUBSAMPLE_FACTOR, image.rows/SUBSAMPLE_FACTOR));   
-    imshow("RGB Image", downsized_image);
+    // imshow("RGB Image", downsized_image);
+    imwrite("./Images_Report/rgb.png", downsized_image);
 
     Mat hsv_image, thresholded_image, opened_image;
     Mat structure(5,5,CV_8U, Scalar(1));
@@ -903,11 +905,13 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
     // Threshold the image within range of hsv colours
     cvtColor(downsized_image, hsv_image, CV_BGR2HSV);
     inRange(hsv_image, hsv_l, hsv_h, thresholded_image);
-    imshow("Thresholded by HSV value", thresholded_image);
+    // imshow("Thresholded by HSV value", thresholded_image);
+    imwrite("./Images_Report/thresholded.png", thresholded_image);
 
     // Performing Opening to remove noise
     morphologyEx( thresholded_image, opened_image, MORPH_OPEN, structure);
-    imshow("Opened", opened_image);
+    // imshow("Opened", opened_image);
+    imwrite("./Images_Report/opened.png", opened_image);
 
 
     // Find contours
@@ -921,7 +925,8 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
         drawContours(contour_image, contours, i, colour, 1, 8, hierarchy);
     }
 
-    imshow("Contours", contour_image);
+    // imshow("Contours", contour_image);
+    imwrite("./Images_Report/contours.png", contour_image);
 
 
     // Approximate contours to straight lines to create 4 sided polygons
@@ -945,6 +950,10 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
                 fillConvexPoly(mask, points, Scalar(255));
                 Mat object_image;
                 downsized_image.copyTo(object_image, mask);
+
+                string my_filename = "./Images_Report/object" + to_string(i) + ".jpg";
+
+                imwrite(my_filename, object_image);
                 
                 // Sort by y value first. Then sort each pair by x value.
                 sort(points.begin(), points.end(), mySortY);
@@ -963,12 +972,12 @@ void ImageWithBlueSignObjects::LocateAndAddAllObjects(AnnotatedImages& training_
         }
     }
 
-    imshow("4-sided polygons", poly_image);
+    // imshow("4-sided polygons", poly_image);
     // Save images
     string name = filename.substr(filename.find_last_of("/") + 1);
     string path = "./Detected_Polygons/" + name;
     imwrite(path, poly_image);
-    // waitKey();
+    // waitKey(0);
 
 }
 
@@ -979,6 +988,7 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
 	// *** Student should write code to compare objects using chosen method.
 	// Please bear in mind that ImageWithObjects::FindBestMatch assumes that the lower the value the better.  Feel free to change this.
 
+    // more meaningful variable names
     const Mat &test = otherObject->image;
     const Mat &ground_truth = image;
 
@@ -989,33 +999,37 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
     cvtColor(image, ground_truth_grey, CV_BGR2GRAY);
     cvtColor(otherObject->image, test_grey, CV_BGR2GRAY);
 
-    Mat test_edge, ground_truth_edge, test_chamfer;
+    imshow("Ground truth grey image", ground_truth_grey);
+    imshow("Detected grey image", test_grey);
 
-    // Get edges of test image and invert the edges so that the edges are zeros.
-    // Get edges of ground_truth images. Edges should be ones.
-    Canny(test_grey, test_edge, 100, 200, 3);
-    threshold(test_edge, test_edge, 127, 255, THRESH_BINARY_INV);
-    Canny(ground_truth_grey, ground_truth_edge, 100, 200, 3);
+    Mat test_binary, ground_truth_binary;
 
-    imshow("Ground truth edge image", ground_truth_edge);
-    imshow("Detected edge image", test_edge);
+    threshold(test_grey, test_binary, 100, 255, CV_THRESH_BINARY);
+    threshold(ground_truth_grey, ground_truth_binary, 100, 255, CV_THRESH_BINARY);
+
+    Mat kernel(3,3, CV_8U, Scalar(1));
+    morphologyEx(ground_truth_binary, ground_truth_binary, MORPH_OPEN, kernel);
+    morphologyEx(test_binary, test_binary, MORPH_OPEN, kernel);
+
+
+    imshow("Ground truth binary image", ground_truth_binary);
+    imshow("Detected binary image", test_binary);
     // waitKey(0);
 
-    distanceTransform(test_edge, test_chamfer, CV_DIST_L2 , 5);
+    // distanceTransform(test_binary, test_chamfer, CV_DIST_L2 , 5);
 
     Mat matching_space;
-    ChamferMatching(test_chamfer, ground_truth_edge, matching_space);
-
+    matchTemplate(test_binary, ground_truth_binary, matching_space,CV_TM_CCORR_NORMED);
     float result = matching_space.at<float>(0,0);
 
     // cout << "matching result " << result << endl;
 
-    // Lower result value means better match.
+    // Higher result value means better match.
     // This threshold was hand-tuned.
-    if (result > 5000 )
+    if (result  < 0.7 )
 	    return BAD_MATCHING_VALUE;
 
-    return result;
+    return 1 - result;
 }  
 
 
@@ -1061,40 +1075,3 @@ double ObjectAndLocation::compareObjects(ObjectAndLocation* otherObject)
      Scalar colour( rand()&0xFF, rand()&0xFF, rand()&0xFF );
  	line( result_image, point1, point2, (passed_colour.val[0] == -1.0) ? colour : passed_colour );
 } 
-
-
-void ChamferMatching( Mat& chamfer_image, Mat& model, Mat& matching_image )
-{
-	// Extract the model points (as they are sparse).
-	vector<Point> model_points;
-	int image_channels = model.channels();
-	for (int model_row=0; (model_row < model.rows); model_row++)
-	{
-		uchar *curr_point = model.ptr<uchar>(model_row);
-		for (int model_column=0; (model_column < model.cols); model_column++)
-		{
-			if (*curr_point > 0)
-			{
-				const Point& new_point = Point(model_column,model_row);
-				model_points.push_back(new_point);
-			}
-			curr_point += image_channels;
-		}
-	}
-	int num_model_points = model_points.size();
-	image_channels = chamfer_image.channels();
-	// Try the model in every possible position
-	matching_image = Mat(chamfer_image.rows-model.rows+1, chamfer_image.cols-model.cols+1, CV_32FC1);
-	for (int search_row=0; (search_row <= chamfer_image.rows-model.rows); search_row++)
-	{
-		float *output_point = matching_image.ptr<float>(search_row);
-		for (int search_column=0; (search_column <= chamfer_image.cols-model.cols); search_column++)
-		{
-			float matching_score = 0.0;
-			for (int point_count=0; (point_count < num_model_points); point_count++)
-				matching_score += (float) *(chamfer_image.ptr<float>(model_points[point_count].y+search_row) + search_column + model_points[point_count].x*image_channels);
-			*output_point = matching_score;
-			output_point++;
-		}
-	}
-}
