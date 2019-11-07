@@ -33,3 +33,18 @@ The problem is to develop a program in C++ to locate and recognise 81 informatio
    `cd ..`
 
    `build/blueSignRecognition `
+
+
+## Class Diagram
+![Class Diagram](UML_class_diagram.png "class diagram")
+
+- `ObjectAndLocation::compareObjects()` perfroms recognition of blue signs.
+- `ImageWithBlueSigns::LocateAndAddAllObjects()` performs detection of blue signs.
+
+# Theory 
+
+## Summary of procedure for detection of blue signs.
+![Detection Summary](DetectionSummary.png "Detection summary")
+
+## Summary of procedure for recognition of blue signs.
+![Recognition Summary](RecognitionSummary.png "Recognition Summary")
