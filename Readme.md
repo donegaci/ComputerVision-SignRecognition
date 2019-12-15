@@ -5,7 +5,7 @@ Kenneth Dawson-Howe's Computer Vision course.
 
 The problem is to develop a program in C++ to locate and recognise 81 information signs from Dublin train stations in the 33 provided images.
 
-![Sample Results](Blue%20Signs/BlueSignSampleResults.png "Sample Results")
+![Sample Results](doc/BlueSignSampleResults.png "Sample Results")
 
 ## Environment Setup
 - This project uses openCV v3.2. Unix download is available from [OpenCV](https://sourceforge.net/projects/opencvlibrary/files/opencv-unix/3.2.0/opencv-3.2.0.zip/download).
@@ -36,7 +36,7 @@ The problem is to develop a program in C++ to locate and recognise 81 informatio
 
 
 ## Class Diagram
-![Class Diagram](UML_class_diagram.png "class diagram")
+![Class Diagram](doc/UML_class_diagram.png "class diagram")
 
 - `ObjectAndLocation::compareObjects()` perfroms recognition of blue signs.
 - `ImageWithBlueSigns::LocateAndAddAllObjects()` performs detection of blue signs.
@@ -44,7 +44,10 @@ The problem is to develop a program in C++ to locate and recognise 81 informatio
 # Theory 
 
 ## Summary of procedure for detection of blue signs.
-![Detection Summary](DetectionSummary.png "Detection summary")
+![Detection Summary](doc/DetectionSummary.png "Detection summary")
 
 ## Summary of procedure for recognition of blue signs.
-![Recognition Summary](RecognitionSummary.png "Recognition Summary")
+![Recognition Summary](doc/RecognitionSummary.png "Recognition Summary")
+
+# Results
+![Results](doc/Results.png "Results")
